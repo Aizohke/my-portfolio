@@ -9,7 +9,7 @@ import { ArrowDown, Github, Wrench, Code, MapPin } from 'lucide-react';
 //    B) Put it in frontend/src/ → import isaacPhoto from '../assets/isaac.jpg'
 //       and replace PHOTO_SRC with isaacPhoto
 // ─────────────────────────────────────────────────────────────────────────────
-const PHOTO_SRC = '/isaac.jpg';   // ← change this to your image path
+const PHOTO_SRC = '/isaac.jpeg';   // ← change this to your image path
 
 const STATS = [
   { value: '3+', label: 'Engineering Projects' },
