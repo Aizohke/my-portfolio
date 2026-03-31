@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// REACT_APP_API_URL must be set in your Netlify environment variables:
+//   Key:   REACT_APP_API_URL
+//   Value: https://your-app-name.onrender.com/api   ← include /api at the end!
+//
+// Local dev: create frontend/.env with:
+//   REACT_APP_API_URL=http://localhost:5000/api
+// ─────────────────────────────────────────────────────────────────────────────
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: BASE_URL,
   withCredentials: true,
   timeout: 15000,
 });
