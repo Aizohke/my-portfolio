@@ -1,0 +1,6 @@
+# Allow all crawlers except admin routes
+User-agent: *
+Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://yourdomain.com/sitemap.xml
