@@ -8,7 +8,7 @@ const { protect } = require('../middleware/auth');
 // Strict rate limiting for login endpoint
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 10,
   skipSuccessfulRequests: true,
   message: { success: false, message: 'Too many login attempts. Try again in 15 minutes.' }
 });
@@ -16,11 +16,12 @@ const loginLimiter = rateLimit({
 // Helper: send token as cookie + JSON
 const sendTokenResponse = (admin, statusCode, res) => {
   const token = admin.getSignedJwtToken();
+  const isProd = process.env.NODE_ENV === 'production';
   const options = {
     expires: new Date(Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
   };
   res
     .status(statusCode)
@@ -31,6 +32,48 @@ const sendTokenResponse = (admin, statusCode, res) => {
       admin: { id: admin._id, email: admin.email, name: admin.name },
     });
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/auth/setup
+// Creates the first admin account if none exists.
+// Uses ADMIN_EMAIL and ADMIN_PASSWORD from environment variables.
+// Returns 403 once an admin already exists — safe to leave in production.
+// Visit this URL once in your browser after first deploy:
+//   https://your-render-app.onrender.com/api/auth/setup
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/setup', async (req, res) => {
+  try {
+    const count = await Admin.countDocuments();
+    if (count > 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Setup already complete. Admin account exists.',
+      });
+    }
+
+    const email    = process.env.ADMIN_EMAIL    || 'admin@isaacmathenge.com';
+    const password = process.env.ADMIN_PASSWORD || 'Admin@SecurePass123!';
+    const name     = 'Isaac Mathenge';
+
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      return res.status(400).json({
+        success: false,
+        message: 'Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables in Render first, then visit this URL.',
+      });
+    }
+
+    const admin = await Admin.create({ email, password, name });
+
+    res.status(201).json({
+      success: true,
+      message: '✅ Admin account created! You can now log in.',
+      email: admin.email,
+      note: 'This endpoint is now disabled since an admin exists.',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // POST /api/auth/login
 router.post('/login', loginLimiter, [
