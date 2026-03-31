@@ -10,4 +10,7 @@
     "dev:frontend": "npm start --prefix frontend",
     "build:frontend": "npm run build --prefix frontend"
   }
+  "overrides": {
+    "brace-expansion": "^2.0.1"
+}
 }
