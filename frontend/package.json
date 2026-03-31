@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@tailwindcss/typography": "^0.5.10",
-    "axios": "^1.6.2",
+    "axios": "^1.6.8",
     "framer-motion": "^10.16.16",
     "lucide-react": "^0.303.0",
     "react": "^18.2.0",
