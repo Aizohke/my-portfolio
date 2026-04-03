@@ -4,25 +4,29 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 
-// Rate limit contact form
+// Rate limit contact form — 10 attempts per hour
 const contactLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5,
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true, // successful sends don't count toward the limit
   message: { success: false, message: 'Too many messages sent. Please try again in an hour.' }
 });
 
-const createTransporter = () => nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT) || 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+const createTransporter = () => {
+  const port = parseInt(process.env.EMAIL_PORT) || 465;
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port,
+    secure: port === 465, // true for 465, false for 587
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/contact/test-email
