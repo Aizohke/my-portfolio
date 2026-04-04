@@ -1,19 +1,30 @@
-const mongoose = require('mongoose');
-// When run via `npm run seed` from the backend/ directory, .env is in backend/
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+/**
+ * seed.js
+ * Seeds the database with sample projects, skills, experience, blog posts and settings.
+ * Auth is handled by Clerk — no admin user needed here.
+ *
+ * Run from backend/ directory:
+ *   node utils/seed.js
+ */
 
-const Admin = require('../models/Admin');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const { Blog, Skill, Experience, Settings } = require('../models/Content');
 
 const seed = async () => {
   try {
+    if (!process.env.MONGO_URI || process.env.MONGO_URI.includes('YOUR_USERNAME')) {
+      console.error('\n❌  MONGO_URI is not set in backend/.env\n');
+      process.exit(1);
+    }
+
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('✅ MongoDB Connected');
 
     // Clear existing data
     await Promise.all([
-      Admin.deleteMany({}),
       Project.deleteMany({}),
       Blog.deleteMany({}),
       Skill.deleteMany({}),
@@ -21,14 +32,6 @@ const seed = async () => {
       Settings.deleteMany({}),
     ]);
     console.log('🗑️  Cleared existing data');
-
-    // ─── Admin ───────────────────────────────────────────────────────────────
-    await Admin.create({
-      email: process.env.ADMIN_EMAIL || 'admin@isaacmathenge.com',
-      password: process.env.ADMIN_PASSWORD || 'Admin@SecurePass123!',
-      name: 'Isaac Mathenge',
-    });
-    console.log('👤 Admin created');
 
     // ─── Projects ─────────────────────────────────────────────────────────────
     await Project.create([
@@ -57,8 +60,8 @@ const seed = async () => {
       },
       {
         title: 'GreenTrace — Land Regeneration Tracker',
-        problem: 'Land degradation monitoring in semi-arid regions relies on infrequent manual surveys that miss rapid changes. Farmers lack data-driven insights to guide sustainable land use and cannot quantify the impact of their regeneration efforts.',
-        solution: 'Developed a web platform during the Land ReGen Hackathon that ingests satellite NDVI data to track vegetation recovery over time. Features an interactive map dashboard, automated report generation, and a community forum for farmers to share best practices.',
+        problem: 'Land degradation monitoring in semi-arid regions relies on infrequent manual surveys that miss rapid changes. Farmers lack data-driven insights to guide sustainable land use.',
+        solution: 'Developed a web platform during the Land ReGen Hackathon that ingests satellite NDVI data to track vegetation recovery over time. Features an interactive map dashboard, automated report generation, and a community forum for farmers.',
         techStack: ['React', 'Python Flask', 'Google Earth Engine API', 'Leaflet.js', 'PostgreSQL'],
         impact: 'Hackathon finalist; tracks 1,200+ hectares across 4 counties; endorsed by Kenya Forestry Research Institute.',
         category: 'software',
@@ -71,7 +74,6 @@ const seed = async () => {
 
     // ─── Skills ───────────────────────────────────────────────────────────────
     await Skill.create([
-      // Engineering
       { category: 'engineering', name: 'SolidWorks CAD', level: 88, icon: '⚙️', order: 1 },
       { category: 'engineering', name: 'AutoCAD', level: 80, icon: '📐', order: 2 },
       { category: 'engineering', name: 'MATLAB / Simulink', level: 75, icon: '📊', order: 3 },
@@ -80,7 +82,6 @@ const seed = async () => {
       { category: 'engineering', name: 'Finite Element Analysis (FEA)', level: 70, icon: '🔩', order: 6 },
       { category: 'engineering', name: 'CNC Machining', level: 65, icon: '⚒️', order: 7 },
       { category: 'engineering', name: 'Thermodynamics & Heat Transfer', level: 80, icon: '🌡️', order: 8 },
-      // Software
       { category: 'software', name: 'JavaScript / TypeScript', level: 85, icon: '💻', order: 1 },
       { category: 'software', name: 'React.js', level: 83, icon: '⚛️', order: 2 },
       { category: 'software', name: 'Node.js / Express', level: 80, icon: '🟢', order: 3 },
@@ -89,7 +90,6 @@ const seed = async () => {
       { category: 'software', name: 'Arduino / Raspberry Pi', level: 76, icon: '🤖', order: 6 },
       { category: 'software', name: 'Docker / Linux', level: 65, icon: '🐳', order: 7 },
       { category: 'software', name: 'Git / GitHub', level: 88, icon: '📦', order: 8 },
-      // Strengths
       { category: 'strengths', name: 'Engineering Problem Solving', level: 92, icon: '🧠', order: 1 },
       { category: 'strengths', name: 'Technical Documentation', level: 85, icon: '📝', order: 2 },
       { category: 'strengths', name: 'Project Leadership', level: 80, icon: '🎯', order: 3 },
@@ -149,39 +149,15 @@ const seed = async () => {
     await Blog.create([
       {
         title: 'From Drawing Board to Workshop Floor: Building the Glass Crusher',
-        content: `<p>When I first sketched the concept for a hydraulically operated glass crusher on a napkin during a thermodynamics lecture, I had no idea how much that doodle would consume the next eight months of my life.</p>
-
-<h2>The Problem That Wouldn't Leave Me Alone</h2>
-<p>Glass recycling in Kenya is dominated by the informal sector — <em>chokora</em> (scrap collectors) who manually break glass bottles using hammers and steel rods. The process is brutal: injuries are common, throughput is low, and the inconsistent cullet size fetches poor prices from recyclers. I wanted to change that.</p>
-
-<h2>Designing in SolidWorks</h2>
-<p>The jaw crusher mechanism was deceptively simple in theory — a moving plate crushes material against a fixed plate — but the devil was in the details. Getting the toggle mechanism geometry right took three full iterations in SolidWorks before the kinematics produced the correct crushing action without binding.</p>
-
-<p>I ran MATLAB simulations to validate the hydraulic cylinder sizing. The required 15kN crushing force at 100mm³/s flow rate meant specifying a 63mm bore cylinder operating at 5 MPa — well within standard hydraulic hand-pump capacity.</p>
-
-<h2>The Workshop Reality</h2>
-<p>Fabrication was humbling. Welding the main frame from 50×50mm square hollow section steel taught me more about distortion control than any textbook. Pre-heating, clamping sequences, and staggered weld passes became my daily vocabulary.</p>
-
-<p>The final assembly tested at 17.2kN peak force — 15% above design spec. More importantly, it worked.</p>`,
+        content: `<p>When I first sketched the concept for a hydraulically operated glass crusher on a napkin during a thermodynamics lecture, I had no idea how much that doodle would consume the next eight months of my life.</p><h2>The Problem That Wouldn't Leave Me Alone</h2><p>Glass recycling in Kenya is dominated by the informal sector. The process is brutal: injuries are common, throughput is low, and the inconsistent cullet size fetches poor prices from recyclers. I wanted to change that.</p><h2>Designing in SolidWorks</h2><p>The jaw crusher mechanism was deceptively simple in theory but the devil was in the details. Getting the toggle mechanism geometry right took three full iterations in SolidWorks before the kinematics produced the correct crushing action without binding.</p><p>I ran MATLAB simulations to validate the hydraulic cylinder sizing. The required 15kN crushing force meant specifying a 63mm bore cylinder operating at 5 MPa — well within standard hydraulic hand-pump capacity.</p><h2>The Workshop Reality</h2><p>Fabrication was humbling. Welding the main frame from 50×50mm square hollow section steel taught me more about distortion control than any textbook. The final assembly tested at 17.2kN peak force — 15% above design spec.</p>`,
         excerpt: 'How a napkin sketch became a fully fabricated hydraulic glass crusher — a journey through SolidWorks, MATLAB, and the TUK workshop.',
         tags: ['mechanical engineering', 'fabrication', 'hydraulics', 'project build'],
         visible: true,
       },
       {
         title: 'Why Every Mechanical Engineer Should Learn to Code',
-        content: `<p>There's a divide in engineering education that nobody talks about enough: the gap between those who design with atoms and those who design with bits. I've lived on both sides, and I'm here to tell you the divide is artificial — and closing it is the most career-defining move a mechanical engineer can make.</p>
-
-<h2>The Mechatronics Wake-Up Call</h2>
-<p>In my second year, we tore apart an industrial servo controller. Inside was a microcontroller running firmware that implemented a PID control loop. My software friends immediately understood the code. My mechanical friends understood the motor. I realised I needed to be fluent in both.</p>
-
-<h2>What Coding Gives a Mechanical Engineer</h2>
-<p>The benefits aren't abstract. When you can write Python, you can automate your FEA post-processing scripts, parse sensor data from test rigs, and build dashboards that your clients can actually interact with. When you know JavaScript, you can create web interfaces for your IoT devices.</p>
-
-<p>For VaxTrack, my background in understanding physical health system workflows — learned observing engineers design medical devices — made the user experience dramatically better than it would have been from a pure software perspective.</p>
-
-<h2>Where to Start</h2>
-<p>Start with Python. It's close enough to pseudocode that the logic patterns are immediately applicable to engineering thinking. Then move to Arduino — bridging physical hardware and code is where the magic happens for mechanical engineers.</p>`,
-        excerpt: 'A mechanical engineering student\'s case for learning full-stack development — and how it transformed my approach to engineering problems.',
+        content: `<p>There's a divide in engineering education that nobody talks about enough: the gap between those who design with atoms and those who design with bits. I've lived on both sides, and I'm here to tell you the divide is artificial.</p><h2>The Mechatronics Wake-Up Call</h2><p>In my second year, we tore apart an industrial servo controller. Inside was a microcontroller running firmware that implemented a PID control loop. My software friends immediately understood the code. My mechanical friends understood the motor. I realised I needed to be fluent in both.</p><h2>Where to Start</h2><p>Start with Python. It's close enough to pseudocode that the logic patterns are immediately applicable to engineering thinking. Then move to Arduino — bridging physical hardware and code is where the magic happens for mechanical engineers.</p>`,
+        excerpt: "A mechanical engineering student's case for learning full-stack development — and how it transformed my approach to engineering problems.",
         tags: ['career', 'coding', 'mechatronics', 'engineering education'],
         visible: true,
       },
@@ -196,17 +172,16 @@ const seed = async () => {
       { key: 'about_text', value: "Currently finishing my B.Eng at the Technical University of Kenya, I thrive at the intersection of fabrication and software. Whether I'm running a simulation in MATLAB, turning a design in SolidWorks, or building a full-stack web app from scratch, I'm driven by one question: how can engineering create lasting change?\n\nMy journey has taken me from the workshop floor — welding frames, operating lathes, and testing hydraulic systems — to writing production code for community organisations. That dual fluency is my superpower." },
       { key: 'github_url', value: 'https://github.com/isaacmathenge' },
       { key: 'linkedin_url', value: 'https://linkedin.com/in/isaacmathenge' },
-      { key: 'email', value: 'isaacmathenge@example.com' },
+      { key: 'email', value: 'mathengeisaac0@gmail.com' },
       { key: 'sections_order', value: ['hero', 'about', 'projects', 'skills', 'experience', 'blog', 'contact'] },
       { key: 'sections_visible', value: { hero: true, about: true, projects: true, skills: true, experience: true, blog: true, contact: true } },
     ]);
     console.log('⚙️  Settings seeded');
 
-    console.log('\n✨ Database seeded successfully!');
-    console.log(`\n🔐 Admin Login:\n   Email:    ${process.env.ADMIN_EMAIL || 'admin@isaacmathenge.com'}\n   Password: ${process.env.ADMIN_PASSWORD || 'Admin@SecurePass123!'}`);
+    console.log('\n✨ Database seeded successfully!\n');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Seed error:', err);
+    console.error('❌ Seed error:', err.message);
     process.exit(1);
   }
 };

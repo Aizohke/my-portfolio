@@ -16,13 +16,26 @@ connectDB();
 
 // ─── Security Middleware ────────────────────────────────────────────────────
 app.use(helmet());
+
+// CORS — works for both local dev and Netlify/Vercel production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  // Pull from env — set this to your Netlify URL in Render dashboard
+  // e.g. https://isaac-portfolio.netlify.app
+  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://your-netlify-site.netlify.app'
-  ],
+  origin: (origin, callback) => {
+    // Allow Postman / curl (no origin) and all listed origins
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    console.error(`CORS blocked: ${origin}`);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Global rate limiter
