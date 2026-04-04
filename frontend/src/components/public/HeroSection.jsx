@@ -257,7 +257,7 @@ export default function HeroSection({ settings = {} }) {
                   </div>
                   <p className="font-mono text-xs text-steel-500 text-center px-4">
                     Add your photo to<br />
-                    <span className="text-rust-400">frontend/public/isaac.jpg</span>
+                    <span className="text-rust-400">frontend/public/isaac.jpeg</span>
                   </p>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function HeroSection({ settings = {} }) {
               >
                 <p className="font-mono text-xs text-rust-400 tracking-widest">B.ENG</p>
                 <p className="font-display text-sm text-white tracking-wide">MECH. ENG</p>
-                <p className="font-mono text-xs text-steel-500">TUK · 2024</p>
+                <p className="font-mono text-xs text-steel-500">TUK · 2026</p>
               </motion.div>
 
             </div>
