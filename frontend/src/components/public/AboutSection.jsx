@@ -51,7 +51,7 @@ export default function AboutSection({ settings = {} }) {
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              {['B.Eng Mechanical Engineering', 'TUK Nairobi', 'Final Year 2024'].map((tag) => (
+              {['B.Eng Mechanical Engineering', 'TUK, Nairobi', 'Final Year 2026'].map((tag) => (
                 <span key={tag} className="px-3 py-1 bg-dark-bg border border-dark-border
                                           text-sm text-steel-300 font-mono">
                   {tag}
@@ -90,8 +90,8 @@ export default function AboutSection({ settings = {} }) {
               className="border border-dashed border-dark-border p-4 mt-4"
             >
               <div className="flex items-center gap-3 text-steel-600 font-mono text-xs">
-                <span className="text-rust-500/60">REV:</span> 4.2 &nbsp;|&nbsp;
-                <span className="text-rust-500/60">DATE:</span> 2024 &nbsp;|&nbsp;
+                <span className="text-rust-500/60">REV:</span> 5.2 &nbsp;|&nbsp;
+                <span className="text-rust-500/60">DATE:</span> 2026 &nbsp;|&nbsp;
                 <span className="text-rust-500/60">DRAWN BY:</span> I. MATHENGE &nbsp;|&nbsp;
                 <span className="text-rust-500/60">INSTITUTION:</span> TUK
               </div>
