@@ -1,43 +1,42 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { adminAPI } from '../utils/api';
+import React, { createContext, useContext } from 'react';
+import { useUser, useAuth as useClerkAuth, useClerk } from '@clerk/clerk-react';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AuthContext now wraps Clerk hooks so the rest of the app
+// (AdminLayout, ProtectedRoute, etc.) works without any changes.
+// ─────────────────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoaded } = useUser();
+  const { getToken } = useClerkAuth();
+  const { signOut } = useClerk();
 
-  const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) { setLoading(false); return; }
-    try {
-      const { data } = await adminAPI.getMe();
-      setAdmin(data.admin);
-    } catch {
-      localStorage.removeItem('adminToken');
-      setAdmin(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { checkAuth(); }, [checkAuth]);
-
-  const login = async (email, password) => {
-    const { data } = await adminAPI.login({ email, password });
-    localStorage.setItem('adminToken', data.token);
-    setAdmin(data.admin);
-    return data;
+  // Store token in localStorage so axios interceptor can attach it
+  const syncToken = async () => {
+    const token = await getToken();
+    if (token) localStorage.setItem('adminToken', token);
+    else localStorage.removeItem('adminToken');
   };
 
+  // Sync token whenever user changes
+  React.useEffect(() => {
+    if (isLoaded) syncToken();
+  }, [isLoaded, user]);
+
   const logout = async () => {
-    try { await adminAPI.logout(); } catch {}
     localStorage.removeItem('adminToken');
-    setAdmin(null);
+    await signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ admin, loading, login, logout, isAuthenticated: !!admin }}>
+    <AuthContext.Provider value={{
+      admin: user ? { id: user.id, email: user.primaryEmailAddress?.emailAddress, name: user.fullName } : null,
+      loading: !isLoaded,
+      isAuthenticated: !!user,
+      logout,
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useUser } from '@clerk/clerk-react';
+import { AuthProvider } from './context/AuthContext';
 
 // Public Pages
 import PublicLayout from './components/public/PublicLayout';
@@ -19,15 +20,17 @@ import AdminSkills from './pages/admin/AdminSkills';
 import AdminExperience from './pages/admin/AdminExperience';
 import AdminSettings from './pages/admin/AdminSettings';
 
-// Protected route wrapper
+// Protected route — uses Clerk's useUser hook
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) return (
+  const { isLoaded, isSignedIn } = useUser();
+
+  if (!isLoaded) return (
     <div className="min-h-screen bg-dark-bg flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-rust-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
-  return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+
+  return isSignedIn ? children : <Navigate to="/admin/login" replace />;
 };
 
 function App() {
@@ -49,7 +52,7 @@ function App() {
             <Route path="blog/:id" element={<BlogPostPage />} />
           </Route>
 
-          {/* ── Admin Routes (completely separate, hidden from public) ── */}
+          {/* ── Admin Routes ── */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={
             <ProtectedRoute><AdminLayout /></ProtectedRoute>
