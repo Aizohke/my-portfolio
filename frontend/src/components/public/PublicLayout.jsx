@@ -112,15 +112,15 @@ export default function PublicLayout() {
               <p className="text-sm text-steel-400">Mechanical Engineering | Full-Stack Development</p>
             </div>
             <div className="flex items-center gap-4">
-              <a href="https://github.com/isaacmathenge" target="_blank" rel="noreferrer"
+              <a href="https://github.com/Aizohke" target="_blank" rel="noreferrer"
                  className="p-2 text-steel-400 hover:text-white hover:bg-dark-border transition-colors">
                 <Github size={20} />
               </a>
-              <a href="https://linkedin.com/in/isaacmathenge" target="_blank" rel="noreferrer"
+              <a href="https://www.linkedin.com/in/mathenge-isaac-a30741336" target="_blank" rel="noreferrer"
                  className="p-2 text-steel-400 hover:text-white hover:bg-dark-border transition-colors">
                 <Linkedin size={20} />
               </a>
-              <a href="mailto:isaacmathenge@example.com"
+              <a href="mailto:mathengeisaac04@gmail.com"
                  className="p-2 text-steel-400 hover:text-white hover:bg-dark-border transition-colors">
                 <Mail size={20} />
               </a>

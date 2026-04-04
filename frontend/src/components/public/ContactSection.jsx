@@ -46,13 +46,13 @@ export default function ContactSection({ settings = {} }) {
             </p>
 
             <div className="space-y-4 mb-8">
-              <a href={`mailto:${settings.email || 'isaacmathenge@example.com'}`}
+              <a href={`mailto:${settings.email || 'mathengeisaac04@gmail.com'}`}
                  className="flex items-center gap-3 text-steel-300 hover:text-white group">
                 <div className="w-10 h-10 bg-dark-card border border-dark-border flex items-center justify-center
                                 group-hover:border-rust-500 transition-colors">
                   <Mail size={16} className="text-rust-500" />
                 </div>
-                <span className="text-sm">{settings.email || 'isaacmathenge@example.com'}</span>
+                <span className="text-sm">{settings.email || 'mathengeisaac04@gmail.com'}</span>
               </a>
               <div className="flex items-center gap-3 text-steel-300">
                 <div className="w-10 h-10 bg-dark-card border border-dark-border flex items-center justify-center">

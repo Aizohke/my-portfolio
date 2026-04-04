@@ -6,8 +6,8 @@ import { Cog, Monitor, Award } from 'lucide-react';
 const PILLARS = [
   {
     icon: <Cog size={22} className="text-rust-500" />,
-    title: 'Engineering First',
-    desc: 'From hydraulic systems to FEA simulation — built on a foundation of mechanical principles.'
+    title: 'Engineering Excellence',
+    desc: 'From mechanical systems and electronics integration to automation of systems using Arduino based control — built on a foundation of mechanical principles.'
   },
   {
     icon: <Monitor size={22} className="text-rust-500" />,
@@ -24,7 +24,7 @@ const PILLARS = [
 export default function AboutSection({ settings = {} }) {
   const { ref, inView } = useInView(0.2);
   const text = settings.about_text ||
-    "Currently finishing my B.Eng at the Technical University of Kenya, I thrive at the intersection of fabrication and software. Whether I'm running a simulation in MATLAB, turning a design in SolidWorks, or building a full-stack web app from scratch, I'm driven by one question: how can engineering create lasting change?\n\nMy journey has taken me from the workshop floor — welding frames, operating lathes, and testing hydraulic systems — to writing production code for community organisations. That dual fluency is my superpower.";
+    "Currently finishing my B.Eng Mechanical Engineering at the Technical University of Kenya, I thrive at the intersection of fabrication and software. Whether I'm turning a design in SolidWorks, fabricating, or building a full-stack web app from scratch, I'm driven by one question: how can engineering create lasting change?\n\nMy journey has taken me from the workshop floor — welding frames, operating lathes, and testing hydraulic systems — to writing production code for community organisations. That dual fluency is my superpower.";
 
   return (
     <section id="about" className="py-24 bg-dark-card relative overflow-hidden">
