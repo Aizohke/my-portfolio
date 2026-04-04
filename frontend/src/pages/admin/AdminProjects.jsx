@@ -4,7 +4,7 @@ import { adminAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, X, Save,
-  Loader2, Image as ImageIcon, Upload
+  Loader2, Image as ImageIcon, Upload, AlertCircle
 } from 'lucide-react';
 
 const EMPTY_PROJECT = {
@@ -34,6 +34,7 @@ function ProjectForm({ project, onSave, onClose }) {
   const [loading, setLoading] = useState(false);
   const [techInput, setTechInput] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -50,16 +51,37 @@ function ProjectForm({ project, onSave, onClose }) {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Reset input so same file can be re-selected if needed
+    e.target.value = '';
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB');
+      return;
+    }
+
     setUploading(true);
+    setUploadError('');
+
     try {
       const fd = new FormData();
       fd.append('image', file);
       fd.append('folder', 'projects');
       const { data } = await adminAPI.uploadImage(fd);
-      set('images', [...(form.images || []), { url: data.data.url, publicId: data.data.publicId, caption: '' }]);
+      set('images', [...(form.images || []), {
+        url: data.data.url,
+        publicId: data.data.publicId,
+        caption: ''
+      }]);
       toast.success('Image uploaded');
-    } catch { toast.error('Upload failed'); }
-    finally { setUploading(false); }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Upload failed';
+      setUploadError(msg);
+      toast.error('Upload failed: ' + msg);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removeImage = (i) => set('images', form.images.filter((_, idx) => idx !== i));
@@ -70,22 +92,30 @@ function ProjectForm({ project, onSave, onClose }) {
     try {
       if (project?._id) {
         await adminAPI.updateProject(project._id, form);
-        toast.success('Project updated');
+        toast.success('Project updated successfully');
       } else {
         await adminAPI.createProject(form);
-        toast.success('Project created');
+        toast.success('Project created successfully');
       }
       onSave();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Save failed');
-    } finally { setLoading(false); }
+      const msg = err.response?.data?.message || err.message || 'Save failed';
+      toast.error(msg);
+      // Do NOT close modal on error — let user fix and retry
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="flex items-center justify-between p-5 border-b border-dark-border">
-        <h2 className="font-heading text-lg text-white">{project?._id ? 'Edit Project' : 'New Project'}</h2>
-        <button type="button" onClick={onClose} className="text-steel-400 hover:text-white"><X size={18} /></button>
+        <h2 className="font-heading text-lg text-white">
+          {project?._id ? 'Edit Project' : 'New Project'}
+        </h2>
+        <button type="button" onClick={onClose} className="text-steel-400 hover:text-white">
+          <X size={18} />
+        </button>
       </div>
 
       <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -93,14 +123,22 @@ function ProjectForm({ project, onSave, onClose }) {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">TITLE *</label>
-            <input value={form.title} onChange={e => set('title', e.target.value)}
-                   required className="form-input" placeholder="Project title" />
+            <input
+              value={form.title}
+              onChange={e => set('title', e.target.value)}
+              required
+              className="form-input"
+              placeholder="Project title"
+            />
           </div>
           <div>
             <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">CATEGORY</label>
-            <select value={form.category} onChange={e => set('category', e.target.value)}
-                    className="form-input">
-              {['mechanical','software','mechatronics','other'].map(c => (
+            <select
+              value={form.category}
+              onChange={e => set('category', e.target.value)}
+              className="form-input"
+            >
+              {['mechanical', 'software', 'mechatronics', 'other'].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -110,38 +148,63 @@ function ProjectForm({ project, onSave, onClose }) {
         {/* Problem */}
         <div>
           <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">THE PROBLEM *</label>
-          <textarea value={form.problem} onChange={e => set('problem', e.target.value)}
-                    required rows={3} className="form-input resize-none" />
+          <textarea
+            value={form.problem}
+            onChange={e => set('problem', e.target.value)}
+            required
+            rows={3}
+            className="form-input resize-none"
+            placeholder="What problem does this project solve?"
+          />
         </div>
 
         {/* Solution */}
         <div>
           <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">THE SOLUTION *</label>
-          <textarea value={form.solution} onChange={e => set('solution', e.target.value)}
-                    required rows={3} className="form-input resize-none" />
+          <textarea
+            value={form.solution}
+            onChange={e => set('solution', e.target.value)}
+            required
+            rows={3}
+            className="form-input resize-none"
+            placeholder="How did you solve it?"
+          />
         </div>
 
         {/* Impact */}
         <div>
           <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">IMPACT</label>
-          <textarea value={form.impact} onChange={e => set('impact', e.target.value)}
-                    rows={2} className="form-input resize-none" />
+          <textarea
+            value={form.impact}
+            onChange={e => set('impact', e.target.value)}
+            rows={2}
+            className="form-input resize-none"
+            placeholder="Measurable outcomes e.g. 15% efficiency increase"
+          />
         </div>
 
         {/* Tech Stack */}
         <div>
           <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">
-            TECH STACK (press Enter to add)
+            TECH STACK <span className="text-steel-600">(press Enter to add each item)</span>
           </label>
-          <input value={techInput} onChange={e => setTechInput(e.target.value)}
-                 onKeyDown={addTech} className="form-input mb-2"
-                 placeholder="e.g. SolidWorks" />
+          <input
+            value={techInput}
+            onChange={e => setTechInput(e.target.value)}
+            onKeyDown={addTech}
+            className="form-input mb-2"
+            placeholder="e.g. SolidWorks, then press Enter"
+          />
           <div className="flex flex-wrap gap-2">
             {form.techStack?.map((t, i) => (
-              <span key={i} className="flex items-center gap-1 px-2 py-1 bg-dark-bg border border-dark-border
-                                       text-xs text-steel-300 font-mono">
+              <span key={i} className="flex items-center gap-1 px-2 py-1 bg-dark-bg border
+                                       border-dark-border text-xs text-steel-300 font-mono">
                 {t}
-                <button type="button" onClick={() => removeTech(i)} className="text-steel-500 hover:text-rust-400 ml-1">
+                <button
+                  type="button"
+                  onClick={() => removeTech(i)}
+                  className="text-steel-500 hover:text-rust-400 ml-1"
+                >
                   <X size={10} />
                 </button>
               </span>
@@ -153,48 +216,98 @@ function ProjectForm({ project, onSave, onClose }) {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">GITHUB URL</label>
-            <input value={form.githubUrl} onChange={e => set('githubUrl', e.target.value)}
-                   className="form-input" placeholder="https://github.com/..." />
+            <input
+              value={form.githubUrl}
+              onChange={e => set('githubUrl', e.target.value)}
+              className="form-input"
+              placeholder="https://github.com/..."
+            />
           </div>
           <div>
             <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">LIVE URL</label>
-            <input value={form.liveUrl} onChange={e => set('liveUrl', e.target.value)}
-                   className="form-input" placeholder="https://..." />
+            <input
+              value={form.liveUrl}
+              onChange={e => set('liveUrl', e.target.value)}
+              className="form-input"
+              placeholder="https://..."
+            />
           </div>
         </div>
 
         {/* Images */}
         <div>
-          <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">IMAGES</label>
-          <div className="flex flex-wrap gap-3 mb-3">
+          <label className="block text-xs font-mono text-steel-400 tracking-widest mb-1.5">
+            IMAGES <span className="text-steel-600">(max 5MB each)</span>
+          </label>
+
+          {uploadError && (
+            <div className="flex items-start gap-2 p-3 mb-3 bg-rust-500/10 border border-rust-500/30 text-rust-400 text-xs">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Upload failed</p>
+                <p>{uploadError}</p>
+                <p className="mt-1 text-steel-500">
+                  Make sure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET
+                  are set in your Render environment variables.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3 mb-2">
             {form.images?.map((img, i) => (
               <div key={i} className="relative w-20 h-20 border border-dark-border overflow-hidden group">
                 <img src={img.url} alt="" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => removeImage(i)}
-                        className="absolute inset-0 bg-black/60 flex items-center justify-center
-                                   opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute inset-0 bg-black/60 flex items-center justify-center
+                             opacity-0 group-hover:opacity-100 transition-opacity"
+                >
                   <Trash2 size={14} className="text-rust-400" />
                 </button>
               </div>
             ))}
+
             <label className={`w-20 h-20 flex flex-col items-center justify-center border border-dashed
                               border-dark-border cursor-pointer hover:border-rust-500/50 transition-colors
-                              text-steel-500 hover:text-steel-300 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-              {uploading ? <Loader2 size={18} className="animate-spin" /> : <><Upload size={18} /><span className="text-xs mt-1">Upload</span></>}
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                              text-steel-500 hover:text-steel-300
+                              ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              {uploading
+                ? <Loader2 size={18} className="animate-spin" />
+                : (
+                  <>
+                    <Upload size={18} />
+                    <span className="text-xs mt-1">Upload</span>
+                  </>
+                )
+              }
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+                disabled={uploading}
+              />
             </label>
           </div>
+          <p className="text-xs text-steel-600">
+            Images require Cloudinary env vars set on Render. You can save the project without images first.
+          </p>
         </div>
 
         {/* Toggles */}
         <div className="flex flex-wrap gap-6">
           {[
-            { label: 'Visible', key: 'visible' },
-            { label: 'Featured', key: 'featured' },
+            { label: 'Visible on public site', key: 'visible' },
+            { label: 'Featured project', key: 'featured' },
           ].map(({ label, key }) => (
             <label key={key} className="flex items-center gap-2 cursor-pointer">
-              <div className={`w-9 h-5 rounded-full transition-colors relative ${form[key] ? 'bg-rust-500' : 'bg-dark-border'}`}
-                   onClick={() => set(key, !form[key])}>
+              <div
+                className={`w-9 h-5 rounded-full transition-colors relative
+                            ${form[key] ? 'bg-rust-500' : 'bg-dark-border'}`}
+                onClick={() => set(key, !form[key])}
+              >
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform
                                 ${form[key] ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
@@ -205,8 +318,18 @@ function ProjectForm({ project, onSave, onClose }) {
       </div>
 
       <div className="flex gap-3 p-5 border-t border-dark-border">
-        <button type="button" onClick={onClose} className="btn-outline text-sm flex-1 justify-center">CANCEL</button>
-        <button type="submit" disabled={loading} className="btn-primary text-sm flex-1 justify-center disabled:opacity-60">
+        <button
+          type="button"
+          onClick={onClose}
+          className="btn-outline text-sm flex-1 justify-center"
+        >
+          CANCEL
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary text-sm flex-1 justify-center disabled:opacity-60"
+        >
           {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {loading ? 'SAVING...' : 'SAVE PROJECT'}
         </button>
@@ -218,15 +341,23 @@ function ProjectForm({ project, onSave, onClose }) {
 export default function AdminProjects() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    adminAPI.getAllProjects()
-      .then(({ data }) => setProjects(data.data || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    setError('');
+    try {
+      const { data } = await adminAPI.getAllProjects();
+      setProjects(data.data || []);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Failed to load projects';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -234,21 +365,26 @@ export default function AdminProjects() {
   const handleEdit = (p) => { setEditing(p); setModalOpen(true); };
   const handleNew  = () => { setEditing(null); setModalOpen(true); };
   const handleSave = () => { setModalOpen(false); load(); };
+  const handleClose = () => setModalOpen(false);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this project?')) return;
+    if (!window.confirm('Delete this project? This cannot be undone.')) return;
     try {
       await adminAPI.deleteProject(id);
       toast.success('Project deleted');
       load();
-    } catch { toast.error('Delete failed'); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete failed');
+    }
   };
 
   const handleToggle = async (id) => {
     try {
       await adminAPI.toggleProject(id);
       load();
-    } catch { toast.error('Toggle failed'); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Toggle failed');
+    }
   };
 
   return (
@@ -263,9 +399,24 @@ export default function AdminProjects() {
         </button>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-start gap-2 p-4 mb-4 bg-rust-500/10 border border-rust-500/30 text-rust-400 text-sm">
+          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Failed to load projects</p>
+            <p className="text-xs mt-1">{error}</p>
+            <p className="text-xs mt-1 text-steel-500">
+              Check that CLERK_SECRET_KEY is set in Render and that you are logged in.
+            </p>
+            <button onClick={load} className="text-xs text-rust-400 underline mt-1">Try again</button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
-          {[1,2,3].map(i => <div key={i} className="h-20 skeleton" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-20 skeleton" />)}
         </div>
       ) : (
         <div className="space-y-3">
@@ -282,7 +433,9 @@ export default function AdminProjects() {
               <div className="w-12 h-12 shrink-0 bg-dark-bg border border-dark-border overflow-hidden">
                 {p.images?.[0]?.url
                   ? <img src={p.images[0].url} alt="" className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={14} className="text-steel-600" /></div>
+                  : <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon size={14} className="text-steel-600" />
+                    </div>
                 }
               </div>
 
@@ -292,21 +445,38 @@ export default function AdminProjects() {
                   <span className="text-xs px-1.5 py-0.5 bg-dark-bg border border-dark-border text-steel-500 font-mono shrink-0">
                     {p.category}
                   </span>
-                  {p.featured && <span className="text-xs px-1.5 py-0.5 bg-rust-500/20 border border-rust-500/40 text-rust-400 shrink-0">featured</span>}
+                  {p.featured && (
+                    <span className="text-xs px-1.5 py-0.5 bg-rust-500/20 border border-rust-500/40 text-rust-400 shrink-0">
+                      featured
+                    </span>
+                  )}
+                  {!p.visible && (
+                    <span className="text-xs px-1.5 py-0.5 bg-dark-bg border border-dark-border text-steel-600 shrink-0">
+                      hidden
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-steel-500 line-clamp-1">{p.problem}</p>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => handleToggle(p._id)}
-                        className={`p-2 transition-colors ${p.visible ? 'text-green-400 hover:text-steel-400' : 'text-steel-600 hover:text-green-400'}`}
-                        title={p.visible ? 'Hide' : 'Show'}>
+                <button
+                  onClick={() => handleToggle(p._id)}
+                  className={`p-2 transition-colors ${p.visible ? 'text-green-400 hover:text-steel-400' : 'text-steel-600 hover:text-green-400'}`}
+                  title={p.visible ? 'Click to hide from public' : 'Click to show on public site'}
+                >
                   {p.visible ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
-                <button onClick={() => handleEdit(p)} className="p-2 text-steel-400 hover:text-white transition-colors">
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="p-2 text-steel-400 hover:text-white transition-colors"
+                >
                   <Pencil size={15} />
                 </button>
-                <button onClick={() => handleDelete(p._id)} className="p-2 text-steel-500 hover:text-rust-400 transition-colors">
+                <button
+                  onClick={() => handleDelete(p._id)}
+                  className="p-2 text-steel-500 hover:text-rust-400 transition-colors"
+                >
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -315,16 +485,17 @@ export default function AdminProjects() {
         </div>
       )}
 
-      {!loading && projects.length === 0 && (
+      {!loading && !error && projects.length === 0 && (
         <div className="text-center py-16 text-steel-500">
-          No projects yet. <button onClick={handleNew} className="text-rust-400 hover:underline">Add one.</button>
+          No projects yet.{' '}
+          <button onClick={handleNew} className="text-rust-400 hover:underline">Add one.</button>
         </div>
       )}
 
       <AnimatePresence>
         {modalOpen && (
-          <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-            <ProjectForm project={editing} onSave={handleSave} onClose={() => setModalOpen(false)} />
+          <Modal open={modalOpen} onClose={handleClose}>
+            <ProjectForm project={editing} onSave={handleSave} onClose={handleClose} />
           </Modal>
         )}
       </AnimatePresence>
