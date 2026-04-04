@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "dependencies": {
   "@clerk/clerk-react": "^4.30.0",
   "@tailwindcss/typography": "^0.5.10",
   "axios": "^1.6.2",
