@@ -3,13 +3,8 @@ import { motion } from 'framer-motion';
 import { ArrowDown, Github, Wrench, Code, MapPin } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 👇 REPLACE THIS with the path to your photo.
-//    Options:
-//    A) Put your photo in frontend/public/ as "isaac.jpg" → use "/isaac.jpg"
-//    B) Put it in frontend/src/ → import isaacPhoto from '../assets/isaac.jpg'
-//       and replace PHOTO_SRC with isaacPhoto
-// ─────────────────────────────────────────────────────────────────────────────
-const PHOTO_SRC = '/isaac.jpeg';   // ← change this to your image path
+
+const PHOTO_SRC = '/isaac.jpg';   // ← change this to your image path
 
 const STATS = [
   { value: '3+', label: 'Engineering Projects' },
